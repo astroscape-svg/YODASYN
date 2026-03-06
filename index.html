@@ -3,141 +3,248 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YODASYN v1.1.4</title>
+    <title>YODASYN v1.2.0</title>
     <style>
         body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #0d1117; color: #c9d1d9; display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; }
         .panel { background: #161b22; padding: 25px; border-radius: 12px; border: 1px solid #30363d; width: 95%; max-width: 950px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .section { background: #0d1117; padding: 12px; border-radius: 8px; border: 1px solid #30363d; }
         h3 { margin: 0 0 10px 0; font-size: 0.75rem; color: #79c0ff; border-bottom: 1px solid #30363d; padding-bottom: 5px; text-transform: uppercase; letter-spacing: 1.5px; }
+        .control-group { margin-bottom: 10px; }
         label { display: block; font-size: 0.65rem; color: #8b949e; margin-bottom: 4px; }
         input[type="range"] { width: 100%; accent-color: #79c0ff; cursor: pointer; }
-        select { width: 100%; background: #010409; color: #c9d1d9; border: 1px solid #30363d; padding: 5px; border-radius: 6px; font-size: 0.8rem; }
-        canvas { background: #010409; width: 100%; height: 80px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #30363d; }
-        .keyboard { display: flex; justify-content: center; overflow-x: auto; padding-bottom: 15px; }
-        .key { width: 40px; height: 120px; background: #f0f6fc; border: 1px solid #30363d; border-radius: 0 0 6px 6px; flex-shrink: 0; }
-        .key.black { width: 28px; height: 80px; background: #161b22; margin-left: -14px; margin-right: -14px; z-index: 2; border: 1px solid #000; }
+        select { width: 100%; background: #010409; color: #c9d1d9; border: 1px solid #30363d; padding: 5px; border-radius: 6px; font-size: 0.8rem; margin-bottom: 10px; }
+        #keyboard { display: flex; height: 120px; margin-top: 20px; position: relative; border-radius: 4px; overflow: hidden; background: #000; border: 2px solid #30363d; }
+        .key { flex: 1; border: 1px solid #ccc; background: #fff; cursor: pointer; position: relative; z-index: 1; }
+        .key.black { background: #161b22; width: 3%; height: 65%; position: absolute; top: 0; margin-left: -1.5%; z-index: 2; border: 1px solid #000; border-radius: 0 0 3px 3px; }
         .key.active { background: #79c0ff !important; }
         .toggle-label { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: #79c0ff; cursor: pointer; font-weight: bold; }
         .osc-label { color: #58a6ff; font-weight: bold; font-size: 0.8rem; margin: 8px 0 4px 0; display: block; }
+        #status-bar { display: flex; justify-content: space-between; gap: 10px; width: 95%; max-width: 950px; margin-bottom: 10px; }
+        .status-box { flex: 1; font-size: 0.7rem; color: #58a6ff; background: rgba(88,166,255,0.1); padding: 5px 10px; border-radius: 4px; box-sizing: border-box; }
         .display-value { float: right; color: #79c0ff; font-family: monospace; }
-        #midi-status { font-size: 0.7rem; color: #58a6ff; margin-bottom: 10px; background: rgba(88,166,255,0.1); padding: 5px 10px; border-radius: 4px; width: 95%; max-width: 950px; box-sizing: border-box; }
+        canvas { width: 100%; height: 80px; background: #010409; border-radius: 6px; border: 1px solid #30363d; margin-bottom: 15px; }
     </style>
 </head>
 <body>
 
-    <h1 style="color: #79c0ff; font-weight: 300; letter-spacing: 4px; margin: 10px 0;">YODASYN v1.1.4</h1>
-    <div id="midi-status">MIDI: Initializing...</div>
+    <h1 style="color: #79c0ff; font-weight: 300; letter-spacing: 4px; margin: 10px 0;">YODASYN v1.2.0</h1>
+    <div id="status-bar">
+        <div id="midi-status" class="status-box">MIDI: Initializing...</div>
+        <div id="audio-status" class="status-box">Audio: Tap to start</div>
+    </div>
 
     <div class="panel">
         <canvas id="scope"></canvas>
 
         <div class="grid">
             <div class="section">
+                <h3>Routing</h3>
+                <label>MIDI Input</label>
+                <select id="midiInputSelect"><option value="all">All Devices</option></select>
+                <label>Audio Output</label>
+                <select id="audioOutputSelect"><option value="default">Default Speaker</option></select>
+            </div>
+
+            <div class="section">
                 <h3>Oscillators</h3>
                 <span class="osc-label">OSC 1</span>
-                <select id="wave1"><option value="sawtooth">Sawtooth</option><option value="square">Square</option><option value="triangle">Triangle</option><option value="sine">Sine</option></select>
-                <input type="range" id="mix1" min="0" max="1" step="0.01" value="0.4">
+                <select id="wave1"><option value="square">Square</option><option value="sawtooth">Sawtooth</option><option value="triangle">Triangle</option><option value="sine">Sine</option></select>
+                <input type="range" id="mix1" min="0" max="1" step="0.01" value="0.8">
                 
                 <span class="osc-label">OSC 2</span>
                 <select id="wave2"><option value="square">Square</option><option value="sawtooth">Sawtooth</option><option value="triangle">Triangle</option><option value="sine">Sine</option></select>
                 <input type="range" id="mix2" min="0" max="1" step="0.01" value="0.2">
                 <label>Detune <span id="detuneVal" class="display-value">12</span></label>
-                <input type="range" id="detune2" min="-50" max="50" value="12">
+                <input type="range" id="detune2" min="-50" max="50" value="12" oninput="updateParams()">
             </div>
 
             <div class="section">
-                <h3>Performance</h3>
+                <h3>Envelope (ADSR)</h3>
+                <label>Attack <span id="attackVal" class="display-value">0.03s</span></label>
+                <input type="range" id="attack" min="0.01" max="2" step="0.01" value="0.03" oninput="updateParams()">
+                <label>Decay <span id="decayVal" class="display-value">0.1s</span></label>
+                <input type="range" id="decay" min="0.01" max="2" step="0.01" value="0.1" oninput="updateParams()">
+                <label>Sustain <span id="sustainVal" class="display-value">0.5</span></label>
+                <input type="range" id="sustain" min="0" max="1" step="0.01" value="0.5" oninput="updateParams()">
+                <label>Release <span id="releaseVal" class="display-value">0.8s</span></label>
+                <input type="range" id="release" min="0.1" max="4" step="0.1" value="0.8" oninput="updateParams()">
+            </div>
+
+            <div class="section">
+                <h3>Filter & Perf</h3>
+                <label>Filter Cutoff <span id="cutoffVal" class="display-value">2500Hz</span></label>
+                <input type="range" id="cutoff" min="40" max="10000" value="2500" oninput="updateParams()">
+                
+                <hr style="border: 0; border-top: 1px solid #30363d; margin: 15px 0;">
+                
                 <label class="toggle-label" style="margin-bottom:15px;"><input type="checkbox" id="holdMode"> HOLD</label>
-                <label class="toggle-label"><input type="checkbox" id="arpActive"> ARPEGGIATOR</label>
+                <label class="toggle-label"><input type="checkbox" id="arpActive" onchange="updateParams()"> ARPEGGIATOR</label>
                 <div style="margin-top:10px;">
                     <label>BPM <span id="bpmVal" class="display-value">120</span></label>
-                    <input type="range" id="arpBpm" min="40" max="240" value="120">
+                    <input type="range" id="arpBpm" min="40" max="240" value="120" oninput="updateParams()">
                 </div>
                 <label style="margin-top:8px;">Arp Mode</label>
                 <select id="arpMode"><option value="up">Up</option><option value="down">Down</option><option value="random">Random</option></select>
             </div>
-
-            <div class="section">
-                <h3>Filter & Env</h3>
-                <label>Cutoff <span id="cutoffVal" class="display-value">2500Hz</span></label>
-                <input type="range" id="cutoff" min="40" max="10000" value="2500">
-                <label>Release <span id="releaseVal" class="display-value">0.8s</span></label>
-                <input type="range" id="release" min="0.1" max="4" step="0.1" value="0.8">
-            </div>
-
-            <div class="section">
-                <h3>Delay FX</h3>
-                <label>Time</label>
-                <input type="range" id="delayTime" min="0" max="1" step="0.01" value="0.3">
-                <label>Feedback</label>
-                <input type="range" id="delayFb" min="0" max="0.8" step="0.01" value="0.4">
-                <label>Mix</label>
-                <input type="range" id="delayMix" min="0" max="0.8" step="0.01" value="0.2">
-            </div>
         </div>
 
-        <div class="keyboard" id="keyboard"></div>
+        <div id="keyboard"></div>
     </div>
 
     <script>
-        let audioCtx, masterGain, filter, analyser, delayNode, delayGain, feedbackGain;
-        const activeVoices = new Map();
+        let audioCtx, masterGain, filter, delayNode, feedbackGain, delayGain, analyser;
+        const voices = new Map();
         const heldNotes = new Set();
         let arpTimer = null;
         let arpIndex = 0;
+        let midiInputsArray = [];
 
-        function initAudio() {
+        // オーディオの初期化とデバイス取得
+        async function initAudio() {
             if (audioCtx) return;
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            filter = audioCtx.createBiquadFilter(); filter.type = "lowpass";
-            delayNode = audioCtx.createDelay(1.0); feedbackGain = audioCtx.createGain(); delayGain = audioCtx.createGain();
-            masterGain = audioCtx.createGain(); analyser = audioCtx.createAnalyser();
-            filter.connect(masterGain); filter.connect(delayNode);
-            delayNode.connect(feedbackGain); feedbackGain.connect(delayNode);
-            delayNode.connect(delayGain); delayGain.connect(masterGain);
-            masterGain.connect(analyser); analyser.connect(audioCtx.destination);
-            updateParams(); drawScope();
-            initMIDI();
+            
+            masterGain = audioCtx.createGain();
+            filter = audioCtx.createBiquadFilter();
+            delayNode = audioCtx.createDelay();
+            feedbackGain = audioCtx.createGain();
+            delayGain = audioCtx.createGain();
+            analyser = audioCtx.createAnalyser();
+
+            filter.type = "lowpass";
+            delayNode.delayTime.value = 0.3;
+            feedbackGain.gain.value = 0.4;
+            delayGain.gain.value = 0.2;
+            masterGain.gain.value = 0.5;
+
+            // ルーティング
+            filter.connect(masterGain);
+            filter.connect(delayNode);
+            delayNode.connect(feedbackGain);
+            feedbackGain.connect(delayNode);
+            delayNode.connect(delayGain);
+            delayGain.connect(masterGain);
+            masterGain.connect(analyser);
+            analyser.connect(audioCtx.destination);
+
+            document.getElementById('audio-status').textContent = "Audio: Ready";
+            updateParams();
+            drawScope();
+            await populateAudioOutputs();
+        }
+
+        // オーディオ出力先の取得と設定
+        async function populateAudioOutputs() {
+            const select = document.getElementById('audioOutputSelect');
+            if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+                select.innerHTML = '<option value="default">Not Supported</option>';
+                return;
+            }
+            try {
+                // デバイスラベルを取得するためにマイク権限を要求するブラウザへの対策
+                await navigator.mediaDevices.getUserMedia({ audio: true }).catch(() => {});
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                select.innerHTML = '';
+                let hasOutput = false;
+                
+                devices.forEach(device => {
+                    if (device.kind === 'audiooutput') {
+                        const option = document.createElement('option');
+                        option.value = device.deviceId;
+                        option.text = device.label || `Speaker ${select.length + 1}`;
+                        select.appendChild(option);
+                        hasOutput = true;
+                    }
+                });
+                if (!hasOutput) select.innerHTML = '<option value="default">Default Only</option>';
+            } catch (e) {
+                console.error("Audio device access error:", e);
+            }
+
+            select.onchange = async () => {
+                if (audioCtx && typeof audioCtx.setSinkId === 'function') {
+                    try {
+                        await audioCtx.setSinkId(select.value);
+                        console.log(`Audio output routed to: ${select.value}`);
+                    } catch (e) {
+                        console.error("Failed to set audio output:", e);
+                    }
+                } else {
+                    alert("お使いのブラウザはオーディオ出力先の変更をサポートしていません。");
+                }
+            };
         }
 
         function initMIDI() {
-            if (!navigator.requestMIDIAccess) return;
+            if (!navigator.requestMIDIAccess) {
+                document.getElementById('midi-status').textContent = "MIDI: Not Supported in this browser.";
+                return;
+            }
             navigator.requestMIDIAccess().then(access => {
                 const updateDevices = () => {
                     const info = document.getElementById('midi-status');
-                    const inputs = access.inputs.values();
-                    let devices = [];
-                    for (let input of inputs) {
-                        devices.push(input.name);
-                        input.onmidimessage = (msg) => {
-                            const [cmd, note, vel] = msg.data;
-                            if (cmd === 144 && vel > 0) noteOn(note);
-                            else if (cmd === 128 || (cmd === 144 && vel === 0)) noteOff(note);
-                        };
+                    const select = document.getElementById('midiInputSelect');
+                    const inputs = Array.from(access.inputs.values());
+                    
+                    // 現在の選択を保存
+                    const currentSelection = select.value;
+                    select.innerHTML = '<option value="all">All Devices</option>';
+                    midiInputsArray = inputs;
+
+                    if (inputs.length === 0) {
+                        info.textContent = "MIDI: No device found.";
+                        return;
                     }
-                    info.textContent = devices.length > 0 ? `MIDI Connected: ${devices.join(', ')}` : "MIDI: No device found. Please connect and tap keyboard.";
+
+                    info.textContent = `MIDI Connected: ${inputs.length} device(s)`;
+                    inputs.forEach(input => {
+                        const option = document.createElement('option');
+                        option.value = input.id;
+                        option.text = input.name;
+                        select.appendChild(option);
+
+                        // メッセージイベントの設定
+                        input.onmidimessage = (msg) => {
+                            const selectedId = document.getElementById('midiInputSelect').value;
+                            // 「All Devices」か、選択中のデバイスと一致した場合のみ処理
+                            if (selectedId === 'all' || selectedId === input.id) {
+                                handleMIDIMessage(msg);
+                            }
+                        };
+                    });
+                    
+                    // 選択状態の復元
+                    if (inputs.find(i => i.id === currentSelection)) {
+                        select.value = currentSelection;
+                    }
                 };
                 updateDevices();
-                access.onstatechange = updateDevices; // ホットプラグ対応
+                access.onstatechange = updateDevices;
             });
         }
 
+        function handleMIDIMessage(msg) {
+            const [cmd, note, vel] = msg.data;
+            if (cmd === 144 && vel > 0) noteOn(note);
+            else if (cmd === 128 || (cmd === 144 && vel === 0)) noteOff(note);
+        }
+
         function updateParams() {
-            // 数値表示の更新
+            // 表示の更新
             document.getElementById('bpmVal').textContent = document.getElementById('arpBpm').value;
             document.getElementById('cutoffVal').textContent = document.getElementById('cutoff').value + "Hz";
+            document.getElementById('attackVal').textContent = document.getElementById('attack').value + "s";
+            document.getElementById('decayVal').textContent = document.getElementById('decay').value + "s";
+            document.getElementById('sustainVal').textContent = document.getElementById('sustain').value;
             document.getElementById('releaseVal').textContent = document.getElementById('release').value + "s";
             document.getElementById('detuneVal').textContent = document.getElementById('detune2').value;
 
             if (!audioCtx) return;
             const now = audioCtx.currentTime;
             filter.frequency.setTargetAtTime(document.getElementById('cutoff').value, now, 0.05);
-            delayNode.delayTime.setTargetAtTime(document.getElementById('delayTime').value, now, 0.05);
-            feedbackGain.gain.setTargetAtTime(document.getElementById('delayFb').value, now, 0.05);
-            delayGain.gain.setTargetAtTime(document.getElementById('delayMix').value, now, 0.05);
             
-            // アルペジエーターのリアルタイム更新
+            // アルペジエーターの更新
             if(document.getElementById('arpActive').checked) {
                 stopArp(); startArp(); 
             } else {
@@ -147,73 +254,92 @@
 
         class Voice {
             constructor(freq) {
-                const now = audioCtx.currentTime;
-                this.o1 = audioCtx.createOscillator(); this.o2 = audioCtx.createOscillator();
-                this.g1 = audioCtx.createGain(); this.g2 = audioCtx.createGain(); this.vGain = audioCtx.createGain();
-                this.o1.type = document.getElementById('wave1').value; this.o1.frequency.setValueAtTime(freq, now);
-                this.g1.gain.setValueAtTime(document.getElementById('mix1').value, now);
-                this.o2.type = document.getElementById('wave2').value; this.o2.frequency.setValueAtTime(freq, now);
-                this.o2.detune.setValueAtTime(document.getElementById('detune2').value * 1, now);
-                this.g2.gain.setValueAtTime(document.getElementById('mix2').value, now);
-                this.vGain.gain.setValueAtTime(0, now);
-                this.vGain.gain.linearRampToValueAtTime(0.3, now + 0.03);
+                this.o1 = audioCtx.createOscillator();
+                this.o2 = audioCtx.createOscillator();
+                this.g1 = audioCtx.createGain();
+                this.g2 = audioCtx.createGain();
+                this.vGain = audioCtx.createGain();
+
                 this.o1.connect(this.g1); this.o2.connect(this.g2);
                 this.g1.connect(this.vGain); this.g2.connect(this.vGain);
                 this.vGain.connect(filter);
-                this.o1.start(); this.o2.start();
+
+                const now = audioCtx.currentTime;
+                this.o1.type = document.getElementById('wave1').value; 
+                this.o1.frequency.setValueAtTime(freq, now);
+                this.g1.gain.setValueAtTime(document.getElementById('mix1').value, now);
+                
+                this.o2.type = document.getElementById('wave2').value; 
+                this.o2.frequency.setValueAtTime(freq, now);
+                this.o2.detune.setValueAtTime(document.getElementById('detune2').value * 1, now);
+                this.g2.gain.setValueAtTime(document.getElementById('mix2').value, now);
+
+                // ADSR - アタック、ディケイ、サスティン
+                const a = parseFloat(document.getElementById('attack').value);
+                const d = parseFloat(document.getElementById('decay').value);
+                const s = parseFloat(document.getElementById('sustain').value);
+                const maxVol = 0.3; // 基本ボリューム
+
+                this.vGain.gain.setValueAtTime(0, now);
+                this.vGain.gain.linearRampToValueAtTime(maxVol, now + a); // Attack
+                this.vGain.gain.setTargetAtTime(maxVol * s, now + a, d / 3); // Decay & Sustain (時定数考慮で/3)
+
+                this.o1.start(now); this.o2.start(now);
             }
             stop() {
                 const now = audioCtx.currentTime;
-                const rel = parseFloat(document.getElementById('release').value);
+                const r = parseFloat(document.getElementById('release').value);
+                
+                // 現在の音量からリリースを開始する
                 this.vGain.gain.cancelScheduledValues(now);
                 this.vGain.gain.setValueAtTime(this.vGain.gain.value, now);
-                this.vGain.gain.exponentialRampToValueAtTime(0.001, now + rel);
-                this.o1.stop(now + rel + 0.1); this.o2.stop(now + rel + 0.1);
+                this.vGain.gain.setTargetAtTime(0, now, r / 3);
+                
+                this.o1.stop(now + r + 0.5); 
+                this.o2.stop(now + r + 0.5);
             }
         }
 
         function noteOn(note) {
             initAudio();
-            const isHold = document.getElementById('holdMode').checked;
-            if (isHold && heldNotes.has(note)) {
-                noteOff(note, true);
-                return;
-            }
             heldNotes.add(note);
+            const key = document.getElementById(`key-${note}`);
+            if (key) key.classList.add('active');
+            
             if (!document.getElementById('arpActive').checked) {
-                if (!activeVoices.has(note)) {
-                    activeVoices.set(note, new Voice(440 * Math.pow(2, (note - 69) / 12)));
-                }
+                if (voices.has(note)) voices.get(note).stop();
+                voices.set(note, new Voice(440 * Math.pow(2, (note - 69) / 12)));
             }
-            const el = document.querySelector(`[data-note="${note}"]`);
-            if(el) el.classList.add('active');
         }
 
-        function noteOff(note, force = false) {
-            const isHold = document.getElementById('holdMode').checked;
-            if (isHold && !force) return;
-            heldNotes.delete(note);
-            if (!document.getElementById('arpActive').checked) {
-                const v = activeVoices.get(note);
-                if (v) { v.stop(); activeVoices.delete(note); }
+        function noteOff(note) {
+            if (!document.getElementById('holdMode').checked) heldNotes.delete(note);
+            const key = document.getElementById(`key-${note}`);
+            if (key && !heldNotes.has(note)) key.classList.remove('active');
+            
+            if (!document.getElementById('arpActive').checked && voices.has(note)) {
+                voices.get(note).stop();
+                voices.delete(note);
             }
-            const el = document.querySelector(`[data-note="${note}"]`);
-            if(el) el.classList.remove('active');
         }
 
         function startArp() {
             if (arpTimer) return;
             const bpm = document.getElementById('arpBpm').value;
-            const interval = 60000 / bpm / 2; // 8分音符相当
+            const interval = 60000 / bpm / 2; // 8分音符
+            
             arpTimer = setInterval(() => {
                 if (heldNotes.size === 0) return;
                 const notes = Array.from(heldNotes).sort((a, b) => a - b);
                 const mode = document.getElementById('arpMode').value;
                 let note;
+                
                 if (mode === 'up') note = notes[arpIndex % notes.length];
                 else if (mode === 'down') note = notes.reverse()[arpIndex % notes.length];
                 else note = notes[Math.floor(Math.random() * notes.length)];
+                
                 const v = new Voice(440 * Math.pow(2, (note - 69) / 12));
+                // アルペジエーターの音をゲート長に合わせて短く切る
                 setTimeout(() => v.stop(), interval * 0.8);
                 arpIndex++;
             }, interval);
@@ -221,45 +347,44 @@
 
         function stopArp() { clearInterval(arpTimer); arpTimer = null; }
 
+        // キーボードUIの描画
         const kb = document.getElementById('keyboard');
         for (let i = 48; i <= 72; i++) {
             const key = document.createElement('div');
-            key.className = [1,3,6,8,10].includes(i % 12) ? 'key black' : 'key';
-            key.dataset.note = i;
-            key.onmousedown = key.ontouchstart = (e) => { e.preventDefault(); noteOn(i); };
-            key.onmouseup = key.onmouseleave = key.ontouchend = () => noteOff(i);
-            kb.appendChild(key);
-        }
-        document.querySelectorAll('input, select').forEach(el => el.oninput = updateParams);
-        
-        document.getElementById('holdMode').onchange = (e) => {
-            if (!e.target.checked) {
-                activeVoices.forEach((v, note) => { v.stop(); activeVoices.delete(note);
-                    const el = document.querySelector(`[data-note="${note}"]`);
-                    if(el) el.classList.remove('active');
-                });
-                heldNotes.clear();
+            key.id = `key-${i}`;
+            const isBlack = [1, 3, 6, 8, 10].includes(i % 12);
+            key.className = `key ${isBlack ? 'black' : ''}`;
+            if (isBlack) {
+                const prev = kb.lastChild;
+                prev.appendChild(key);
+            } else {
+                kb.appendChild(key);
             }
-        };
+            key.onmousedown = (e) => { e.stopPropagation(); noteOn(i); };
+            key.onmouseup = (e) => { e.stopPropagation(); noteOff(i); };
+            key.onmouseleave = (e) => { e.stopPropagation(); noteOff(i); };
+        }
 
         function drawScope() {
             requestAnimationFrame(drawScope);
+            if (!analyser) return;
+            const data = new Uint8Array(analyser.frequencyBinCount);
+            analyser.getByteTimeDomainData(data);
             const ctx = document.getElementById('scope').getContext('2d');
-            const buf = new Uint8Array(analyser.frequencyBinCount);
-            analyser.getByteTimeDomainData(buf);
-            ctx.fillStyle = '#010409'; ctx.fillRect(0,0,950,100);
-            ctx.lineWidth = 2; ctx.strokeStyle = '#79c0ff';
-            ctx.beginPath();
-            let x = 0; const s = 950 / buf.length;
-            for(let i=0; i<buf.length; i++) {
-                const y = (buf[i]/128.0) * 40;
-                if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-                x += s;
+            const w = ctx.canvas.width = ctx.canvas.clientWidth;
+            const h = ctx.canvas.height = ctx.canvas.clientHeight;
+            ctx.fillStyle = '#010409'; ctx.fillRect(0, 0, w, h);
+            ctx.lineWidth = 2; ctx.strokeStyle = '#79c0ff'; ctx.beginPath();
+            for (let i = 0; i < data.length; i++) {
+                const x = w * i / data.length, y = h * data[i] / 255;
+                i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
             }
             ctx.stroke();
         }
-        // 初期ステータス表示
-        document.getElementById('midi-status').textContent = "MIDI: Scan started. Tap keyboard to enable Audio/MIDI.";
+
+        // 初期化処理
+        initMIDI();
+        document.body.addEventListener('click', initAudio, { once: true });
     </script>
 </body>
 </html>
